@@ -85,8 +85,8 @@ namespace nkast.Aether.Physics2D.Collision
     /// </summary>
     public class DynamicTree<TNode>
     {
-        private ThreadLocal<Stack<int>> _raycastStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
-        private ThreadLocal<Stack<int>> _queryStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
+        private static ThreadLocal<Stack<int>> _raycastStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
+        private static ThreadLocal<Stack<int>> _queryStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
         private int _freeList;
         private int _nodeCapacity;
         private int _nodeCount;

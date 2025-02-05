@@ -70,14 +70,14 @@ namespace nkast.Aether.Physics2D.Dynamics
 
         private float _invDt0;
         private Body[] _stack = new Body[64];
-        private ThreadLocal<QueryReportFixtureDelegate> _queryDelegateTmp;
+        private static ThreadLocal<QueryReportFixtureDelegate> _queryDelegateTmp = new ThreadLocal<QueryReportFixtureDelegate>();
         private BroadPhaseQueryCallback _queryCallbackCache;
         private TOIInput _input = new TOIInput();
-        private ThreadLocal<Vector2> _testPointPointTmp;
-        private ThreadLocal<Fixture> _testPointFixtureTmp;
+        private static ThreadLocal<Vector2> _testPointPointTmp = new ThreadLocal<Vector2>();
+        private static ThreadLocal<Fixture> _testPointFixtureTmp = new ThreadLocal<Fixture>();
         private QueryReportFixtureDelegate _testPointDelegateCache;
         private Stopwatch _watch = new Stopwatch();
-        private ThreadLocal<RayCastReportFixtureDelegate> _rayCastDelegateTmp;
+        private static ThreadLocal<RayCastReportFixtureDelegate> _rayCastDelegateTmp = new ThreadLocal<RayCastReportFixtureDelegate>();
         private BroadPhaseRayCastCallback _rayCastCallbackCache;
 
         internal bool _worldHasNewFixture;
@@ -1627,7 +1627,9 @@ namespace nkast.Aether.Physics2D.Dynamics
             // Query the world for overlapping shapes.
             QueryAABB(_testPointDelegateCache, ref aabb);
 
-            return _testPointFixtureTmp.Value;
+            var fixture = _testPointFixtureTmp.Value;
+            _testPointFixtureTmp.Value = null;
+            return fixture;
         }
 
         private bool TestPointCallback(Fixture fixture)
