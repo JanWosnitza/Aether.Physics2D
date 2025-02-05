@@ -25,6 +25,10 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <NoWarn>CS1591; CS1572; CS1573; CS1711; IL2026; IL2057</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="ILLink.Descriptors.xml">
       <LogicalName>ILLink.Descriptors.xml</LogicalName>
