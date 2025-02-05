@@ -36,6 +36,7 @@
 // OPTIMIZE_TOI
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Diagnostics;
 using nkast.Aether.Physics2D.Collision;
@@ -69,14 +70,14 @@ namespace nkast.Aether.Physics2D.Dynamics
 
         private float _invDt0;
         private Body[] _stack = new Body[64];
-        private QueryReportFixtureDelegate _queryDelegateTmp;
+        private ThreadLocal<QueryReportFixtureDelegate> _queryDelegateTmp;
         private BroadPhaseQueryCallback _queryCallbackCache;
         private TOIInput _input = new TOIInput();
-        private Vector2 _testPointPointTmp;
-        private Fixture _testPointFixtureTmp;
+        private ThreadLocal<Vector2> _testPointPointTmp;
+        private ThreadLocal<Fixture> _testPointFixtureTmp;
         private QueryReportFixtureDelegate _testPointDelegateCache;
         private Stopwatch _watch = new Stopwatch();
-        private RayCastReportFixtureDelegate _rayCastDelegateTmp;
+        private ThreadLocal<RayCastReportFixtureDelegate> _rayCastDelegateTmp;
         private BroadPhaseRayCastCallback _rayCastCallbackCache;
 
         internal bool _worldHasNewFixture;
@@ -1512,15 +1513,15 @@ namespace nkast.Aether.Physics2D.Dynamics
         /// <param name="aabb">The aabb query box.</param>
         public void QueryAABB(QueryReportFixtureDelegate callback, ref AABB aabb)
         {
-            _queryDelegateTmp = callback;
+            _queryDelegateTmp.Value = callback;
             ContactManager.BroadPhase.Query(_queryCallbackCache, ref aabb);
-            _queryDelegateTmp = null;
+            _queryDelegateTmp.Value = null;
         }
 
         private bool QueryAABBCallback(int proxyId)
         {
             FixtureProxy proxy = ContactManager.BroadPhase.GetProxy(proxyId);
-            return _queryDelegateTmp(proxy.Fixture);
+            return _queryDelegateTmp.Value(proxy.Fixture);
         }
 
         /// <summary>
@@ -1544,9 +1545,9 @@ namespace nkast.Aether.Physics2D.Dynamics
             input.Point1 = point1;
             input.Point2 = point2;
 
-            _rayCastDelegateTmp = callback;
+            _rayCastDelegateTmp.Value = callback;
             ContactManager.BroadPhase.RayCast(_rayCastCallbackCache, ref input);
-            _rayCastDelegateTmp = null;
+            _rayCastDelegateTmp.Value = null;
         }
 
         private float RayCastCallback(ref RayCastInput rayCastInput, int proxyId)
@@ -1561,7 +1562,7 @@ namespace nkast.Aether.Physics2D.Dynamics
             {
                 float fraction = output.Fraction;
                 Vector2 point = (1.0f - fraction) * rayCastInput.Point1 + fraction * rayCastInput.Point2;
-                return _rayCastDelegateTmp(fixture, point, output.Normal, fraction);
+                return _rayCastDelegateTmp.Value(fixture, point, output.Normal, fraction);
             }
 
             return rayCastInput.MaxFraction;
@@ -1620,21 +1621,22 @@ namespace nkast.Aether.Physics2D.Dynamics
             aabb.LowerBound = point - d;
             aabb.UpperBound = point + d;
 
-            _testPointPointTmp = point;
-            _testPointFixtureTmp = null;
+            _testPointPointTmp.Value = point;
+            _testPointFixtureTmp.Value = null;
 
             // Query the world for overlapping shapes.
             QueryAABB(_testPointDelegateCache, ref aabb);
 
-            return _testPointFixtureTmp;
+            return _testPointFixtureTmp.Value;
         }
 
         private bool TestPointCallback(Fixture fixture)
         {
-            bool inside = fixture.TestPoint(ref _testPointPointTmp);
+            var point = _testPointPointTmp.Value;
+            bool inside = fixture.TestPoint(ref point);
             if (inside)
             {
-                _testPointFixtureTmp = fixture;
+                _testPointFixtureTmp.Value = fixture;
                 return false;
             }
 
