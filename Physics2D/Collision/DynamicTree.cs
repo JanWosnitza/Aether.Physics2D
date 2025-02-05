@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Diagnostics;
 using nkast.Aether.Physics2D.Common;
 #if XNAAPI
@@ -84,8 +85,8 @@ namespace nkast.Aether.Physics2D.Collision
     /// </summary>
     public class DynamicTree<TNode>
     {
-        private Stack<int> _raycastStack = new Stack<int>(256);
-        private Stack<int> _queryStack = new Stack<int>(256);
+        private ThreadLocal<Stack<int>> _raycastStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
+        private ThreadLocal<Stack<int>> _queryStack = new ThreadLocal<Stack<int>>(() => new Stack<int>(256));
         private int _freeList;
         private int _nodeCapacity;
         private int _nodeCount;
@@ -349,12 +350,13 @@ namespace nkast.Aether.Physics2D.Collision
         /// <param name="aabb">The aabb.</param>
         public void Query(BroadPhaseQueryCallback callback, ref AABB aabb)
         {
-            _queryStack.Clear();
-            _queryStack.Push(_root);
+            var queryStack = _queryStack.Value;
+            queryStack.Clear();
+            queryStack.Push(_root);
 
-            while (_queryStack.Count > 0)
+            while (queryStack.Count > 0)
             {
-                int nodeId = _queryStack.Pop();
+                int nodeId = queryStack.Pop();
                 if (nodeId == NullNode)
                 {
                     continue;
@@ -374,8 +376,8 @@ namespace nkast.Aether.Physics2D.Collision
                     }
                     else
                     {
-                        _queryStack.Push(_nodes[nodeId].Child1);
-                        _queryStack.Push(_nodes[nodeId].Child2);
+                        queryStack.Push(_nodes[nodeId].Child1);
+                        queryStack.Push(_nodes[nodeId].Child2);
                     }
                 }
             }
@@ -414,12 +416,13 @@ namespace nkast.Aether.Physics2D.Collision
                 Vector2.Max(ref p1, ref t, out segmentAABB.UpperBound);
             }
 
-            _raycastStack.Clear();
-            _raycastStack.Push(_root);
+            var raycastStack = _raycastStack.Value;
+            raycastStack.Clear();
+            raycastStack.Push(_root);
 
-            while (_raycastStack.Count > 0)
+            while (raycastStack.Count > 0)
             {
-                int nodeId = _raycastStack.Pop();
+                int nodeId = raycastStack.Pop();
                 if (nodeId == NullNode)
                 {
                     continue;
@@ -468,8 +471,8 @@ namespace nkast.Aether.Physics2D.Collision
                 }
                 else
                 {
-                    _raycastStack.Push(_nodes[nodeId].Child1);
-                    _raycastStack.Push(_nodes[nodeId].Child2);
+                    raycastStack.Push(_nodes[nodeId].Child1);
+                    raycastStack.Push(_nodes[nodeId].Child2);
                 }
             }
         }
