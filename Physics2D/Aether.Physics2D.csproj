@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>CS1591; CS1572; CS1573; CS1711; IL2026; IL2057</NoWarn>
+    <NoWarn>CS1591; CS1572; CS1573; CS1711; IL2026; IL2057; CS0612; CS0219; CS0414; CS8073; CS1587; CS0649; CS0162; MSB3539</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
